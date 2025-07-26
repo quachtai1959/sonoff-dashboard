@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Điều khiển Sonoff T1 3CH từ xa</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 450px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2em;
+            font-weight: 300;
+        }
+
+        .config-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+        }
+
+        .config-section h3 {
+            margin-bottom: 15px;
+            color: #495057;
+            font-size: 1.1em;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .switch-container {
+            margin-bottom: 20px;
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .switch-container:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .switch-label {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            margin: 8px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 90px;
+            text-transform: uppercase;
+        }
+
+        .btn-on {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-on:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn-off {
+            background: linear-gradient(45deg, #dc3545, #e83e8c);
+            color: white;
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+        }
+
+        .btn-off:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(220, 53, 69, 0.4);
+        }
+
+        .btn-all {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            width: 100%;
+            margin: 10px 0;
+            padding: 15px;
+            font-size: 18px;
+        }
+
+        .btn-all:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .status {
+            text-align: center;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 15px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .status.success {
+            background: linear-gradient(45deg, #d4edda, #c3e6cb);
+            color: #155724;
+            border: 2px solid #28a745;
+        }
+
+        .status.error {
+            background: linear-gradient(45deg, #f8d7da, #f5c6cb);
+            color: #721c24;
+            border: 2px solid #dc3545;
+        }
+
+        .status.info {
+            background: linear-gradient(45deg, #d1ecf1, #bee5eb);
+            color: #0c5460;
+            border: 2px solid #17a2b8;
+        }
+
+        .note {
+            background: linear-gradient(45deg, #e2e3e5, #d6d8db);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 25px;
+            font-size: 14px;
+            line-height: 1.6;
+            border-left: 5px solid #667eea;
+        }
+
+        .connection-indicator {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #dc3545;
+            animation: pulse 2s infinite;
+        }
+
+        .connection-indicator.connected {
+            background: #28a745;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="connection-indicator" id="connectionStatus"></div>
+        <h1>🏠 Smart Home Control</h1>
+        
+        <div class="config-section">
+            <h3>🌐 Cấu hình kết nối từ xa</h3>
+            <div class="input-group">
+                <label>DDNS hoặc IP Public + Port:</label>
+                <input type="text" id="sonoffURL" placeholder="sonoff-hoang.ddns.net:8080" value="">
+            </div>
+            <div class="input-group">
+                <label>Mật khẩu Tasmota (nếu có):</label>
+                <input type="password" id="tasmotaPassword" placeholder="Để trống nếu không có">
+            </div>
+        </div>
+
+        <div id="status" class="status info">
+            🔵 Nhập thông tin kết nối và thử điều khiển
+        </div>
+
+        <div class="switch-container">
+            <div class="switch-label">💡 Swwitch 1</div>
+            <button class="btn btn-on" onclick="controlRelay(1, 'ON')">🔆 BẬT</button>
+            <button class="btn btn-off" onclick="controlRelay(1, 'OFF')">🌙 TẮT</button>
+        </div>
+
+        <div class="switch-container">
+            <div class="switch-label">🛏️ Swwitch 2</div>
+            <button class="btn btn-on" onclick="controlRelay(2, 'ON')">🔆 BẬT</button>
+            <button class="btn btn-off" onclick="controlRelay(2, 'OFF')">🌙 TẮT</button>
+        </div>
+
+        <div class="switch-container">
+            <div class="switch-label">🍳 Swwitch 3</div>
+            <button class="btn btn-on" onclick="controlRelay(3, 'ON')">🔆 BẬT</button>
+            <button class="btn btn-off" onclick="controlRelay(3, 'OFF')">🌙 TẮT</button>
+        </div>
+
+        <button class="btn btn-all" onclick="controlAll('ON')">🔥 BẬT TẤT CẢ</button>
+        <button class="btn btn-all" onclick="controlAll('OFF')">❄️ TẮT TẤT CẢ</button>
+
+        <div class="note">
+            <strong>📱 Hướng dẫn sử dụng:</strong><br>
+            1. <strong>DDNS/IP:</strong> Nhập địa chỉ DDNS hoặc IP Public:Port của router<br>
+            2. <strong>Mật khẩu:</strong> Nếu đã đặt WebPassword trong Tasmota<br>
+            3. <strong>Từ xa:</strong> Có thể điều khiển từ bất kỳ đâu có internet<br>
+            4. <strong>Bảo mật:</strong> Chỉ chia sẻ link này cho người tin tưởng
+        </div>
+
+        <div class="footer">
+            ⚡ Powered by Tasmota & Smart Home Tech
+        </div>
+    </div>
+
+    <script>
+        // Lưu cài đặt vào localStorage
+        function saveSettings() {
+            const url = document.getElementById('sonoffURL').value;
+            const password = document.getElementById('tasmotaPassword').value;
+            localStorage.setItem('sonoffURL', url);
+            localStorage.setItem('tasmotaPassword', password);
+        }
+
+        // Tải cài đặt từ localStorage
+        function loadSettings() {
+            const savedURL = localStorage.getItem('sonoffURL');
+            const savedPassword = localStorage.getItem('tasmotaPassword');
+            if (savedURL) document.getElementById('sonoffURL').value = savedURL;
+            if (savedPassword) document.getElementById('tasmotaPassword').value = savedPassword;
+        }
+
+        function showStatus(message, type, duration = 4000) {
+            const status = document.getElementById('status');
+            const connectionStatus = document.getElementById('connectionStatus');
+            
+            status.textContent = message;
+            status.className = `status ${type}`;
+            
+            // Cập nhật indicator
+            if (type === 'success') {
+                connectionStatus.className = 'connection-indicator connected';
+            } else if (type === 'error') {
+                connectionStatus.className = 'connection-indicator';
+            }
+            
+            setTimeout(() => {
+                if (type !== 'info') {
+                    status.className = 'status info';
+                    status.textContent = '🔵 Sẵn sàng điều khiển';
+                }
+            }, duration);
+        }
+
+        function buildURL(command) {
+            const baseURL = document.getElementById('sonoffURL').value.trim();
+            const password = document.getElementById('tasmotaPassword').value.trim();
+            
+            if (!baseURL) {
+                showStatus('❌ Vui lòng nhập DDNS hoặc IP:Port!', 'error');
+                return null;
+            }
+            
+            // Thêm http:// nếu chưa có
+            const fullURL = baseURL.startsWith('http') ? baseURL : `http://${baseURL}`;
+            
+            // Build command URL
+            let commandURL = `${fullURL}/cm?cmnd=${command}`;
+            
+            // Thêm password nếu có
+            if (password) {
+                commandURL += `&user=admin&password=${encodeURIComponent(password)}`;
+            }
+            
+            return commandURL;
+        }
+
+        function controlRelay(relayNum, action) {
+            saveSettings(); // Lưu cài đặt
+            
+            const command = `Power${relayNum}%20${action}`;
+            const url = buildURL(command);
+            
+            if (!url) return;
+            
+            showStatus(`🔄 Đang gửi lệnh: Relay ${relayNum} ${action}...`, 'info', 2000);
+            
+            // Tạo iframe ẩn để gửi request
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = url;
+            
+            // Xử lý kết quả
+            iframe.onload = function() {
+                showStatus(`✅ Thành công: Relay ${relayNum} ${action === 'ON' ? 'BẬT' : 'TẮT'}`, 'success');
+            };
+            
+            iframe.onerror = function() {
+                showStatus(`❌ Lỗi kết nối! Kiểm tra DDNS/IP và mạng`, 'error');
+            };
+            
+            document.body.appendChild(iframe);
+            
+            // Xóa iframe sau 3 giây
+            setTimeout(() => {
+                if (iframe.parentNode) {
+                    document.body.removeChild(iframe);
+                }
+            }, 3000);
+        }
+
+        function controlAll(action) {
+            saveSettings();
+            
+            const url = buildURL(`Backlog%20Power1%20${action}%3B%20Power2%20${action}%3B%20Power3%20${action}`);
+            if (!url) return;
+            
+            showStatus(`🔄 Đang ${action === 'ON' ? 'bật' : 'tắt'} tất cả thiết bị...`, 'info', 2000);
+            
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = url;
+            
+            iframe.onload = function() {
+                showStatus(`✅ Đã ${action === 'ON' ? 'BẬT' : 'TẮT'} tất cả thiết bị!`, 'success');
+            };
+            
+            iframe.onerror = function() {
+                showStatus(`❌ Lỗi kết nối! Kiểm tra DDNS/IP và mạng`, 'error');
+            };
+            
+            document.body.appendChild(iframe);
+            
+            setTimeout(() => {
+                if (iframe.parentNode) {
+                    document.body.removeChild(iframe);
+                }
+            }, 3000);
+        }
+
+        // Khởi tạo khi load trang
+        window.onload = function() {
+            loadSettings();
+            showStatus('🔵 Nhập thông tin kết nối và bắt đầu điều khiển', 'info');
+        };
+
+        // Lưu cài đặt khi thay đổi
+        document.getElementById('sonoffURL').addEventListener('input', saveSettings);
+        document.getElementById('tasmotaPassword').addEventListener('input', saveSettings);
+    </script>
+</body>
+</html>
